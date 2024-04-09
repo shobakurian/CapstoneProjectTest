@@ -9,14 +9,14 @@
 // Import required modules
 const express = require('express');
 const cors = require('cors');
-const { initialize } = require('./config/database');
+const { initialize } = require('../config/database');
 const {
   addNewRestaurant,
   getAllRestaurants,
   getRestaurantById,
   updateRestaurantById,
   deleteRestaurantById
-} = require('./models/restaurant');
+} = require('../models/restaurant');
 require('dotenv').config();
 
 // Initialize Express app
