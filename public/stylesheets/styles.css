@@ -1,0 +1,42 @@
+body {
+    font-family: 'Lato', sans-serif;
+}
+
+/*  Header Styles */
+.bg-custom {
+    background-color: #333 !important;
+}
+
+.navbar-light .navbar-brand,
+.navbar-light .nav-link {
+    color: #ffffff !important;
+}
+
+.navbar-light .nav-link:hover,
+.navbar-light .nav-link:focus {
+    color: #cccccc !important;
+}
+
+.navbar-toggler {
+    border-color: #ffffff !important;
+}
+
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='rgba(255, 255, 255, 0.7)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E") !important;
+}
+
+/*  Footer Styles */
+.footer {
+    background-color: #1d72c7;
+    border-top: 1px solid #e7e7e7;
+    text-align: center !important;
+    margin: auto;
+}
+
+.designed-by {
+    font-size: 0.9rem;
+    font-style: italic;
+    display: block;
+    margin-top: 0.5rem;
+    text-align: center ;
+}

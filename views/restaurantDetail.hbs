@@ -1,0 +1,22 @@
+<h1>{{name}}</h1>
+<p><strong>Location:</strong> {{borough}}</p>
+<p><strong>Cuisine:</strong> {{cuisine}}</p>
+<p>
+  <strong>Address:</strong>
+  {{address.building}} {{address.street}}, Zipcode: {{address.zipcode}}
+</p>
+
+<h2>Grades</h2>
+{{#if grades.length}}
+<ul>
+  {{#each grades}}
+  <li>
+    Date: {{date.$date}}, Grade: {{grade}}, Score: {{score}}
+  </li>
+  {{/each}}
+</ul>
+{{else}}
+<p>No grades available.</p>
+{{/if}}
+
+<a href="/api/restaurants/{{_id.$oid}}/edit">Edit Restaurant</a>
