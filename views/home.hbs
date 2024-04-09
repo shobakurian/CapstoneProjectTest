@@ -1,0 +1,11 @@
+<h1>Restaurants</h1>
+<ul>
+  {{#each restaurants}}
+    <li>
+      <strong>Name:</strong> {{name}} <br>
+      <strong>Borough:</strong> {{borough}} <br>
+      <strong>Cuisine:</strong> {{cuisine}} <br>
+      <strong>Address:</strong> {{address.building}}, {{address.street}}, {{address.zipcode}}
+    </li>
+  {{/each}}
+</ul>

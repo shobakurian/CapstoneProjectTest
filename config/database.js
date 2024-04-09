@@ -1,13 +1,8 @@
-// database.js
-
 const mongoose = require('mongoose');
 
 const initialize = (connectionString) => {
   return new Promise((resolve, reject) => {
-    mongoose.connect(connectionString, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    })
+    mongoose.connect(connectionString)
     .then(() => {
       console.log('Connected to MongoDB');
       resolve();
