@@ -20,7 +20,7 @@ const restaurantSchema = new mongoose.Schema({
   restaurant_id: String, // Ensure this is unique if used as an identifier
 });
 
-const Restaurant = mongoose.model("Restaurant", restaurantSchema);
+const Restaurant = mongoose.model("Restaurant", restaurantSchema, "restaurants");
 
 const addNewRestaurant = async (data) => {
   try {
@@ -49,11 +49,10 @@ const getAllRestaurants = async (page, perPage, borough) => {
 
 const getRestaurantById = async (id) => {
   try {
-    const restaurant = await Restaurant.findById(id).exec();
+    const restaurant = await Restaurant.findById(id);
     return restaurant;
   } catch (error) {
-    console.error("Error getting restaurant by ID:", error);
-    throw error;
+    throw error; 
   }
 };
 

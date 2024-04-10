@@ -1,26 +1,35 @@
-/****************************************************************************** * 
- * ITE5315 – Project * I declare that this assignment is my own work in accordance with 
- * Humber Academic Policy. * No part of this assignment has been copied manually or electronically
- *  from any other source * (including web sites) or distributed to other students.
- *  * * Group member Name: Abin Mathew , Shoba Merin Kurian
- * _ Student IDs: N01579677 , N01511573 Date: 04-04-2024_ 
- * 
- * ******************************************************************************/
-// Import required modules
+/******************************************************************************
+ * ITE5315 – Project
+ * Group member Name: Abin Mathew, Shoba Merin Kurian
+ * Student IDs: N01579677, N01511573
+ * Date: 04-04-2024
+ ******************************************************************************/
+
 const express = require("express");
 const cors = require("cors");
-const { initialize } = require("./config/database");
-const restaurantRoutes = require("./routes/restaurantRoutes");
 const { engine } = require("express-handlebars");
 const path = require("path");
+const { initialize } = require("./config/database");
+const {
+  addNewRestaurant,
+  getAllRestaurants,
+  getRestaurantById,
+  updateRestaurantById,
+  deleteRestaurantById,
+} = require("./models/restaurant");
 require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors());
 app.use(express.static(path.join(__dirname, "public")));
+const methodOverride = require("method-override");
+app.use(methodOverride("_method"));
+app.use(express.urlencoded({ extended: true })); 
 
-
-// Set up Handlebars view engine
 app.engine(
   ".hbs",
   engine({
@@ -31,12 +40,7 @@ app.engine(
   })
 );
 app.set("view engine", ".hbs");
-app.set("views", "./views");
-
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.set("views", path.join(__dirname, "views"));
 
 initialize(process.env.MONGODB_URI)
   .then(() => {
@@ -49,8 +53,128 @@ initialize(process.env.MONGODB_URI)
     console.error("Error connecting to MongoDB:", error);
   });
 
-app.get("/", (req, res) => {
-  res.render("home");
+// Display form to add a new restaurant
+app.get("/restaurants/new", (req, res) => {
+  res.render("addRestaurant");
 });
+
+// API Route to add a new restaurant
+app.post("/api/restaurants", async (req, res) => {
+  try {
+    const restaurant = await addNewRestaurant(req.body);
+    res.status(201).redirect("/restaurants");
+  } catch (error) {
+    console.error("Error creating restaurant:", error);
+    res.status(500).render("error", { error: "Server error" });
+  }
+});
+
+// API Route to get all restaurants
+app.get("/api/restaurants", async (req, res) => {
+  try {
+    const { page = 1, perPage = 10, borough } = req.query;
+    const restaurants = await getAllRestaurants(page, perPage, borough);
+    res.json(restaurants);
+  } catch (error) {
+    console.error("Error getting restaurants:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Display all restaurants (for browsing)
+app.get("/restaurants", async (req, res) => {
+  try {
+    const { page = 1, perPage = 10, borough } = req.query;
+    const restaurants = await getAllRestaurants(page, perPage, borough);
+    const plainRestaurantsData = restaurants.map((restaurant) =>
+      restaurant.toObject()
+    );
+    res.render("home", { restaurants: plainRestaurantsData });
+  } catch (error) {
+    console.error("Error getting restaurants:", error);
+    res.status(500).render("error", { error: "Server error" });
+  }
+});
+
+// Display restaurant details
+app.get("/restaurants/:id", async (req, res) => {
+  try {
+    const restaurant = await getRestaurantById(req.params.id);
+    if (!restaurant) {
+      res.status(404).render("error", { error: "Restaurant not found" });
+      return;
+    }
+
+    // Convert the restaurant document to a plain object and format dates
+    const restaurantData = restaurant.toObject({
+      getters: true,
+      virtuals: false,
+    });
+    restaurantData.grades = restaurantData.grades.map((grade) => ({
+      ...grade,
+      date: grade.date.toDateString(), // Format the date
+      _id: grade._id.toString(), // Convert ObjectId to string if necessary
+    }));
+    restaurantData._id = restaurantData._id.toString(); // Convert ObjectId to string
+
+    res.render("restaurantDetail", { restaurant: restaurantData });
+  } catch (error) {
+    console.error("Error getting restaurant by ID:", error);
+    res.status(500).render("error", { error: "Server error" });
+  }
+});
+
+app.get("/api/restaurants/edit/:id", async (req, res) => {
+  try {
+    const restaurantDoc = await getRestaurantById(req.params.id);
+    if (!restaurantDoc) {
+      return res.status(404).render("error", { error: "Restaurant not found" });
+    }
+    const restaurant = restaurantDoc.toObject();
+    res.render("editRestaurant", { restaurant });
+  } catch (error) {
+    console.error("Error showing edit form:", error);
+    res.status(500).render("error", { error: "Server error" });
+  }
+});
+
+app.post("/api/restaurants/edit/:id", async (req, res) => {
+  try {
+    const updatedData = req.body;
+    await updateRestaurantById(req.params.id, updatedData);
+    // Redirect to the restaurant details page or elsewhere after successful update
+    res.redirect(`/api/restaurants/${req.params.id}`);
+  } catch (error) {
+    console.error("Error updating restaurant:", error);
+    res.status(500).render("error", { error: "Server error" });
+  }
+});
+
+app.post("/api/restaurants/update/:id", async (req, res) => {
+  console.log("Updating restaurant ID:", req.params.id);
+  console.log("Data received:", req.body);
+  try {
+    const updatedData = req.body;
+    await updateRestaurantById(req.params.id, updatedData);
+    console.log("Update successful for ID:", req.params.id);
+    res.redirect(`/restaurants/${req.params.id}`);
+  } catch (error) {
+    console.error("Error updating restaurant:", error);
+    res.status(500).render("error", { error: "Server error" });
+  }
+});
+
+app.delete("/api/restaurants/delete/:id", async (req, res) => {
+  try {
+    await deleteRestaurantById(req.params.id);
+    // Redirect to the list of restaurants or home page after deletion
+    res.redirect("/restaurants");
+  } catch (error) {
+    console.error("Error deleting restaurant:", error);
+    res.status(500).render("error", { error: "Server error" });
+  }
+});
+
+
 
 module.exports = app;
