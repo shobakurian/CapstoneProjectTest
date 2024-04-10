@@ -36,11 +36,10 @@ const addNewRestaurant = async (data) => {
 const getAllRestaurants = async (page, perPage, borough) => {
   try {
     const filter = borough ? { borough } : {};
-      const restaurants = await Restaurant.find(filter)
+    const restaurants = await Restaurant.find(filter)
       .skip((page - 1) * perPage)
       .limit(parseInt(perPage, 10))
       .exec();
-      console.log(restaurants);
     return restaurants;
   } catch (error) {
     console.error("Error getting restaurants:", error);
