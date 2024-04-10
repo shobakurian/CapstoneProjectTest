@@ -13,14 +13,14 @@ const { initialize } = require('./config/database');
 const restaurantRoutes = require('./routes/restaurantRoutes');
 const dotenv = require('dotenv');
 const path = require('path');
-
+const app = express();
 
 const exphbs = require('express-handlebars');
 dotenv.config();
 const PORT = process.env.PORT || 3000;
-app.engine('handlebars', exphbs());
+
 app.set('view engine', 'handlebars');
-const app = express(); // Move the declaration of app here
+
 app.use(express.static(path.join(__dirname, "public")));
 // Set Handlebars as the view engine
 app.engine('.hbs', exphbs.engine({ extname: '.hbs' }));
