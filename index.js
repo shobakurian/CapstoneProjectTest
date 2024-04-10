@@ -13,6 +13,8 @@ const { initialize } = require('./config/database');
 const restaurantRoutes = require('./routes/restaurantRoutes');
 const dotenv = require('dotenv');
 const path = require('path');
+
+
 const exphbs = require('express-handlebars');
 dotenv.config();
 const PORT = process.env.PORT || 3000;
