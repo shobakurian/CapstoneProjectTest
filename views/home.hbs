@@ -1,6 +1,27 @@
-<h1>Restaurants</h1>
-<ul>
-  {{#each restaurants}}
-    <li>{{this.name}} - Located in {{this.borough}}</li>
-  {{/each}}
-</ul>
+<h1 class="mt-5 mb-3 text-center">All Restaurants</h1>
+<div class="container">
+    <table class="table table-hover">
+        <thead class="thead-light">
+            <tr>
+                <th>Name</th>
+                <th>Borough</th>
+                <th>Address</th>
+                <th>Cuisine</th>
+                <th>Best Grade</th>
+                <th>Grade Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each restaurants}}
+            <tr>
+                <td><strong>{{name}}</strong></td>
+                <td>{{borough}}</td>
+                <td>{{address.street}}</td>
+                <td>{{cuisine}} Cuisine</td>
+                <td>{{grades.[0].grade}}</td>
+                <td>{{grades.[0].date}}</td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>

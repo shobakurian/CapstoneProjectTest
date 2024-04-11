@@ -15,6 +15,25 @@
         <li class="nav-item">
           <a class="nav-link" href="/restaurants/new">Add Restaurant</a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/restaurants/:id">Search Restaurant</a>
+        </li>
+        
+        <!-- Authentication Links -->
+        <div class="auth-links">
+            {{#if user}}
+                <li class="nav-item">
+                    <a href="/logout" class="nav-link btn btn-primary">Logout</a>
+                </li>
+            {{else}}
+                <li class="nav-item">
+                    <a href="/register" class="nav-link btn btn-secondary">Register</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/login" class="nav-link btn btn-primary">Login</a>
+                </li>
+            {{/if}}
+        </div>
       </ul>
     </div>
   </nav>
