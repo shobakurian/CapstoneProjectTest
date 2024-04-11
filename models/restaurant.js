@@ -20,7 +20,7 @@ const restaurantSchema = new mongoose.Schema({
   restaurant_id: String
 });
 
-const Restaurant = mongoose.model('Restaurant', restaurantSchema);
+const Restaurant = mongoose.model("Restaurant", restaurantSchema);
 
 const addNewRestaurant = (data) => {
   return new Promise((resolve, reject) => {
@@ -42,8 +42,14 @@ const getAllRestaurants = (page, perPage, borough) => {
     .exec();
 };
 
-const getRestaurantById = (id) => {
-  return Restaurant.findById(id).exec();
+const getRestaurantById = async (id) => {
+  try {
+    const restaurant = await Restaurant.findById(id).exec();
+    return restaurant;
+  } catch (error) {
+    console.error("Error getting restaurant by ID:", error);
+    throw error;
+  }
 };
 
 const updateRestaurantById = (data, id) => {

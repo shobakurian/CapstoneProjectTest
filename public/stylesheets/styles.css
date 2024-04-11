@@ -24,6 +24,100 @@ body {
 .navbar-toggler-icon {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='rgba(255, 255, 255, 0.7)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E") !important;
 }
+.navbar-collapse {
+    margin-left: 57%;
+}
+
+
+
+/* restuarantDetails Styles */
+.restuarentDetails {
+    margin: 5%;
+}
+.display-4 {
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: #333;
+}
+.detail-text {
+    font-size: 1.1rem;
+    color: #555;
+}
+
+.list-group-item {
+    background-color: #fefefe;
+    border: 1px solid #ddd;
+}
+
+.btn-primary,
+.btn-danger {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 1rem;
+}
+
+.btn-danger {
+    margin-left: 15px;
+}
+.btn-primary:hover,
+.btn-danger:hover {
+    opacity: 0.9;
+}
+
+/* editRestuarent styles */
+
+.editRestuarent {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    color: #333;
+    font-weight: 600;
+}
+
+form {
+    margin-top: 20px;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+label {
+    font-weight: 500;
+    color: #555;
+}
+
+input[type="text"].form-control {
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+}
+
+button.btn {
+    font-size: 16px;
+    padding: 10px 15px;
+    margin-right: 10px;
+    letter-spacing: 0.5px;
+    margin-bottom: 4%;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border: none;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border: none;
+}
+
+button.btn:hover {
+    opacity: 0.9;
+}
+
 
 /*  Footer Styles */
 .footer {
