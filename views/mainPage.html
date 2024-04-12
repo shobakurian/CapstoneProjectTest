@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="shortcut icon" href="images/RestaurantLogo.jpg" type="image/x-icon">
+    <!-- Include Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .login-container {
+            max-width: 400px;
+            margin: 50px auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .btn-block {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .login-footer {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+    <div class="text-center mb-4">
+        <img class="image_logo" src="images/RestaurantLogo.jpg" alt="Logo" style="max-width: 300px;"> 
+        <h3>Welcome to The Restaurant.</h3>
+    </div>
+
+    <!-- Login Button -->
+    <form action="/login" method="post" style="width: 100%;">
+        <button type="submit" class="btn btn-lg btn-success btn-block">Login</button>
+    </form>
+
+    <!-- Register Button -->
+    <a href="/register" class="btn btn-lg btn-primary btn-block">Create account</a>
+
+</div>
+
+<!-- Include Bootstrap JS and its dependencies -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+</body>
+</html>

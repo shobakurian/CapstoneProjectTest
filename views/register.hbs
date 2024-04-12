@@ -1,20 +1,26 @@
-<!-- views/register.hbs -->
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Registration</title>
-</head>
 <body>
-    <h1>User Registration</h1>
-    <form action="/register" method="POST">
+    <h1>Register</h1>
+    {{#if messages.error}}
+        {{#each messages.error}}
+            <div style="color: red;">{{this}}</div>
+        {{/each}}
+    {{/if}}
+    {{#if messages.success}}
+        {{#each messages.success}}
+            <div style="color: green;">{{this}}</div>
+        {{/each}}
+    {{/if}}
+
+    <form action="/register" method="post">
         <label for="username">Username:</label>
         <input type="text" id="username" name="username" required>
+
         <label for="password">Password:</label>
         <input type="password" id="password" name="password" required>
+
+        <label for="confirm-password">Retype Password:</label>
+        <input type="password" id="confirm-password" name="confirmPassword" required>
+
         <button type="submit">Register</button>
     </form>
 </body>
-</html>

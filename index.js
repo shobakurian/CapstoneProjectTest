@@ -1,113 +1,200 @@
-// index.js
-
 const express = require("express");
 const cors = require("cors");
+require("dotenv").config();
 const { engine } = require("express-handlebars");
 const path = require("path");
 const { initialize } = require("./config/database");
-const { requireAuth } = require('./authMiddleware');    
-const session = require('express-session');
-const bodyParser = require('body-parser');
-const userRoutes = require('./userRoutes'); // Import user routes
-const restaurantRoutes = require('./restaurantRoutes');
-const User = require('./models/user'); // Import User model
-const bcrypt = require('bcrypt');
+const session = require("express-session");
+const bodyParser = require("body-parser");
+const passport = require("passport");
+const LocalStrategy = require("passport-local").Strategy;
+const flash = require("express-flash");
+const bcrypt = require("bcrypt");
+const User = require("./models/user");
 const {
-    addNewRestaurant,
-    getAllRestaurants,
-    getRestaurantById,
-    updateRestaurantById,
-    deleteRestaurantById,
+  addNewRestaurant,
+  getAllRestaurants,
+  getRestaurantById,
+  updateRestaurantById,
+  deleteRestaurantById,
 } = require("./models/restaurant");
-require('dotenv').config();
+
 
 const app = express();
+// Setup Handlebars engine with express-handlebars
+app.engine(
+  "hbs",
+  engine({
+    defaultLayout: "main", // Specify a default layout: views/layouts/main.hbs
+    extname: ".hbs", // Set the file extension for Handlebars files
+    layoutsDir: path.join(__dirname, "views/layouts"), // Specify the path to layouts
+    partialsDir: path.join(__dirname, "views/partials"), // Specify the path to partials
+  })
+);
+app.set("view engine", "hbs");
+app.set("views", path.join(__dirname, "views"));
+
 const PORT = process.env.PORT || 3000;
-const methodOverride = require("method-override");
-app.use(express.urlencoded({ extended: true })) ;
+
 // Middleware setup
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
-app.use(methodOverride("_method"));
-app.use(session({
-  secret: 'your-secret-key',
-  resave: false,
-  saveUninitialized: false
-}));
-app.engine(
-  ".hbs",
-  engine({
-    extname: ".hbs",
-    defaultLayout: "main",
-    layoutsDir: path.join(__dirname, "views/layouts"),
-    partialsDir: path.join(__dirname, "views/partials"),
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: app.get("env") === "production",
+      httpOnly: true,
+      maxAge: 3600000,
+    },
   })
 );
-app.set("view engine", ".hbs");
-app.set("views", path.join(__dirname, "views"));
+app.use(flash());
 
-// Initialize MongoDB
-initialize(process.env.MONGODB_URI)
-  .then(() => {
-    console.log("Connected to MongoDB");
-    // Start server
-    app.listen(PORT, () => {
-      console.log(`Server is running on http://localhost:${PORT}`);
-    });
-  })
-  .catch((error) => {
-    console.error("Error connecting to MongoDB:", error);
-    // Handle error appropriately (e.g., exit the application)
-    process.exit(1);
-  });
+// Passport configuration
+app.use(passport.initialize());
+app.use(passport.session());
 
-// Login endpoint
-app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-    console.log("User:", username);
-    console.log("Password:", password);
-
-    try {
-        // Find the user by username
+passport.use(
+  new LocalStrategy(
+    {
+      usernameField: "username",
+    },
+    async (username, password, done) => {
+      try {
         const user = await User.findOne({ username });
-        console.log("Stored Password:", user.password);
-
-        // Check if the user exists
         if (!user) {
-            console.log("User not found");
-            return res.status(401).redirect('/login'); // Username not found
+          return done(null, false, { message: "Incorrect username." });
         }
-
-        // Compare passwords
-        const isValidPassword = await bcrypt.compare(password, user.password);
-        // isValidPassword =true;
-        // console.log("isValidPassword:", isValidPassword);
-
-        // if (!isValidPassword) {
-        //     console.log("Invalid password");
-        //     return res.status(401).redirect('/login'); // Invalid password
-        // }
-
-        // Passwords match, proceed with login
-        console.log("Password matches");
-        req.session.user = user; // Save user information in session
-        res.cookie('user_id', user._id.toString(), { maxAge: 3600000 }); // Save user ID in a cookie (expires in 1 hour)
-        res.redirect('/restaurants'); // Redirect to the main page after login
-    } catch (error) {
-        console.error("Error during login:", error);
-        res.status(500).redirect('/login'); // Internal server error
+        const isValid = await bcrypt.compare(password, user.password);
+        if (!isValid) {
+          return done(null, false, { message: "Incorrect password." });
+        }
+        return done(null, user);
+      } catch (e) {
+        return done(e);
+      }
     }
+  )
+);
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (err) {
+    done(err);
+  }
+});
+
+function ensureAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next(); // User is logged in, proceed to the next function in the middleware stack
+  }
+  // User is not logged in
+  req.flash("error", "You must be logged in to view that page.");
+  res.redirect("/login"); // Redirect them to the login page
+}
+
+
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "views", "mainPage.html"));
 });
 
 
+// User Authentication Routes
+
+app.get('/register', (req, res) => {
+    res.render('register');
+});
+
+// Handle the registration form submission
+app.post("/register", async (req, res) => {
+  try {
+    const { username, password, confirmPassword } = req.body;
+
+    // Check if the passwords match
+    if (password !== confirmPassword) {
+      req.flash("error", "Passwords do not match");
+      return res.redirect("/register");
+    }
+
+    // Check if the user already exists
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      req.flash("error", "Username already exists");
+      return res.redirect("/register");
+    }
+
+    // Hash the password before saving it to the database
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create a new user and save to the database
+    const user = new User({
+      username,
+      password: hashedPassword,
+    });
+    await user.save();
+
+    // Redirect to login or another appropriate page
+    req.flash("success", "Registration successful, please log in.");
+    res.redirect("/login");
+  } catch (error) {
+    console.error("Error during registration:", error);
+    req.flash("error", "Failed to register");
+    res.redirect("/register");
+  }
+});
+
+
+
+app.get("/login", (req, res) => {
+  if (req.isAuthenticated()) {
+    res.redirect("/restaurants"); 
+  } else {
+    res.render("login", { message: req.flash("error") }); 
+  }
+});
+
+
+app.post(
+  "/login",
+  passport.authenticate("local", {
+    successRedirect: "/restaurants",
+    failureRedirect: "/login",
+    failureFlash: "Invalid username or password."
+  })
+);  
+app.get("/logout", function (req, res, next) {
+  req.logout(function (err) {
+    if (err) {
+      return next(err);
+    }
+    res.redirect("/");
+  });
+});
+
+app.use((req, res, next) => {
+  res.locals.isAuthenticated = req.isAuthenticated();
+  res.locals.user = req.user; // Make user object available in all views
+  next();
+});  
 
 
 // Display form to add a new restaurant
-app.get("/restaurants/new", (req, res) => {
+app.get("/restaurants/new",ensureAuthenticated, (req, res) => {
     res.render("addRestaurant");
 });
+
 
 // API Route to add a new restaurant
 app.post("/api/restaurants", async (req, res) => {
@@ -120,8 +207,9 @@ app.post("/api/restaurants", async (req, res) => {
     }
 });
 
+
 // API Route to get all restaurants
-app.get("/api/restaurants", async (req, res) => {
+app.get("/api/restaurants",ensureAuthenticated, async (req, res) => {
     try {
         const { page = 1, perPage = 10, borough } = req.query;
         const restaurants = await getAllRestaurants(page, perPage, borough);
@@ -132,16 +220,12 @@ app.get("/api/restaurants", async (req, res) => {
     }
 });
 
-
-app.get("/restaurants", async (req, res) => {
-    console.log("Inside /rest");
+// Displaying main page with restaurants
+app.get("/restaurants",ensureAuthenticated, async (req, res) => {
     try {
         const { page = 1, perPage = 10, borough } = req.query;
         const restaurants = await getAllRestaurants(page, perPage, borough);
-        const plainRestaurantsData = restaurants.map((restaurant) =>
-            restaurant.toObject()
-        );
-        res.render("home", { restaurants: plainRestaurantsData });
+        res.render("home", { restaurants: restaurants.map(restaurant => restaurant.toObject()) });
     } catch (error) {
         console.error("Error getting restaurants:", error);
         res.status(500).render("error", { error: "Server error" });
@@ -149,66 +233,39 @@ app.get("/restaurants", async (req, res) => {
 });
 
 // Display restaurant details
-app.get("/restaurants/:id", async (req, res) => {
+app.get("/restaurants/:id",ensureAuthenticated, async (req, res) => {
     try {
         const restaurant = await getRestaurantById(req.params.id);
         if (!restaurant) {
             res.status(404).render("error", { error: "Restaurant not found" });
             return;
         }
-
-        // Convert the restaurant document to a plain object and format dates
-        const restaurantData = restaurant.toObject({
-            getters: true,
-            virtuals: false,
-        });
-        restaurantData.grades = restaurantData.grades.map((grade) => ({
-            ...grade,
-            date: grade.date.toDateString(), // Format the date
-            _id: grade._id.toString(), // Convert ObjectId to string if necessary
-        }));
-        restaurantData._id = restaurantData._id.toString(); // Convert ObjectId to string
-
-        res.render("restaurantDetail", { restaurant: restaurantData });
+        res.render("restaurantDetail", { restaurant: restaurant.toObject() });
     } catch (error) {
         console.error("Error getting restaurant by ID:", error);
         res.status(500).render("error", { error: "Server error" });
     }
 });
 
-app.get("/api/restaurants/edit/:id", async (req, res) => {
+// Display edit form for a restaurant
+app.get("/api/restaurants/edit/:id",ensureAuthenticated, async (req, res) => {
     try {
-        const restaurantDoc = await getRestaurantById(req.params.id);
-        if (!restaurantDoc) {
-            return res.status(404).render("error", { error: "Restaurant not found" });
+        const restaurant = await getRestaurantById(req.params.id);
+        if (!restaurant) {
+            res.status(404).render("error", { error: "Restaurant not found" });
+            return;
         }
-        const restaurant = restaurantDoc.toObject();
-        res.render("editRestaurant", { restaurant });
+        res.render("editRestaurant", { restaurant: restaurant.toObject() });
     } catch (error) {
         console.error("Error showing edit form:", error);
         res.status(500).render("error", { error: "Server error" });
     }
 });
 
+// Handle restaurant update
 app.post("/api/restaurants/edit/:id", async (req, res) => {
     try {
-        const updatedData = req.body;
-        await updateRestaurantById(req.params.id, updatedData);
-        // Redirect to the restaurant details page or elsewhere after successful update
-        res.redirect(`/api/restaurants/${req.params.id}`);
-    } catch (error) {
-        console.error("Error updating restaurant:", error);
-        res.status(500).render("error", { error: "Server error" });
-    }
-});
-
-app.post("/api/restaurants/update/:id", async (req, res) => {
-    console.log("Updating restaurant ID:", req.params.id);
-    console.log("Data received:", req.body);
-    try {
-        const updatedData = req.body;
-        await updateRestaurantById(req.params.id, updatedData);
-        console.log("Update successful for ID:", req.params.id);
+        await updateRestaurantById(req.params.id, req.body);
         res.redirect(`/restaurants/${req.params.id}`);
     } catch (error) {
         console.error("Error updating restaurant:", error);
@@ -216,23 +273,28 @@ app.post("/api/restaurants/update/:id", async (req, res) => {
     }
 });
 
-app.delete("/api/restaurants/delete/:id", async (req, res) => {
+// Handle restaurant deletion
+app.delete("/api/restaurants/delete/:id",ensureAuthenticated, async (req, res) => {
     try {
         await deleteRestaurantById(req.params.id);
-        // Redirect to the list of restaurants or home page after deletion
         res.redirect("/restaurants");
     } catch (error) {
         console.error("Error deleting restaurant:", error);
         res.status(500).render("error", { error: "Server error" });
     }
 });
-// User routes (login route)
-app.use('/', userRoutes);
-
-// Middleware to protect routes
-app.use(requireAuth);
-// Restaurant routes
-app.use('/restaurants', restaurantRoutes);
 
 
-module.exports = app;
+
+// Initialize the database and start the server
+initialize(process.env.MONGODB_URI)
+  .then(() => {
+    console.log("Database connected successfully");
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error("Failed to connect to the database:", error);
+    process.exit(1);
+  });
