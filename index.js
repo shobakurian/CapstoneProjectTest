@@ -10,7 +10,9 @@ const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const flash = require("express-flash");
 const bcrypt = require("bcrypt");
+const { validationResult } = require('express-validator');
 const User = require("./models/user");
+
 const {
   addNewRestaurant,
   getAllRestaurants,
@@ -21,14 +23,18 @@ const {
 
 
 const app = express();
-// Setup Handlebars engine with express-handlebars
+
+const { allowInsecurePrototypeAccess } = require('@handlebars/allow-prototype-access');
+
+
 app.engine(
   "hbs",
   engine({
     defaultLayout: "main", // Specify a default layout: views/layouts/main.hbs
     extname: ".hbs", // Set the file extension for Handlebars files
     layoutsDir: path.join(__dirname, "views/layouts"), // Specify the path to layouts
-    partialsDir: path.join(__dirname, "views/partials"), // Specify the path to partials
+    partialsDir: path.join(__dirname, "views/partials"),
+    handlebars: allowInsecurePrototypeAccess(require('handlebars')) // Specify the path to partials
   })
 );
 app.set("view engine", "hbs");
@@ -54,10 +60,17 @@ app.use(
   })
 );
 app.use(flash());
+const paginate = require('express-paginate');
 
+// Use the pagination middleware
+app.use(paginate.middleware(10, 50));
 // Passport configuration
 app.use(passport.initialize());
 app.use(passport.session());
+// Define Handlebars helper functions
+const handlebars = require('handlebars');
+const exphbs = require('express-handlebars');
+
 
 passport.use(
   new LocalStrategy(
@@ -220,12 +233,34 @@ app.get("/api/restaurants",ensureAuthenticated, async (req, res) => {
     }
 });
 
-// Displaying main page with restaurants
-app.get("/restaurants",ensureAuthenticated, async (req, res) => {
+app.get("/restaurants", ensureAuthenticated, async (req, res) => {
     try {
-        const { page = 1, perPage = 10, borough } = req.query;
-        const restaurants = await getAllRestaurants(page, perPage, borough);
-        res.render("home", { restaurants: restaurants.map(restaurant => restaurant.toObject()) });
+        // Extract query parameters
+        const page = parseInt(req.query.page) || 1;
+        const perPage = parseInt(req.query.perPage) || 10;
+        const borough = req.query.borough;
+
+        // Get restaurants for the current page
+        const { restaurants, totalPages, firstPage, lastPage } = await getAllRestaurants(page, perPage, borough);
+
+        // Determine if there's a next page
+        const hasNextPage = page < totalPages;
+
+        // Determine if there's a previous page
+        const hasPrevPage = page > 1;
+
+        // Render the home template with restaurants and pagination information
+        res.render("home", {
+            restaurants: restaurants.map(restaurant => restaurant.toObject()),
+            hasNextPage,
+            hasPrevPage,
+            nextPage: hasNextPage ? page + 1 : null,
+            prevPage: hasPrevPage ? page - 1 : null,
+            firstPage,
+            lastPage,
+            totalPages,
+            currentPage: page
+        });
     } catch (error) {
         console.error("Error getting restaurants:", error);
         res.status(500).render("error", { error: "Server error" });

@@ -3,7 +3,10 @@ const mongoose = require("mongoose");
 const restaurantSchema = new mongoose.Schema({
   address: {
     building: String,
-    coord: [Number], // GeoJSON coordinates
+    coord: {
+      type: { type: String, default: "Point" },
+      coordinates: [Number], // GeoJSON coordinates [longitude, latitude]
+    },
     street: String,
     zipcode: String,
   },
@@ -24,6 +27,14 @@ const Restaurant = mongoose.model("Restaurant", restaurantSchema, "restaurants")
 
 const addNewRestaurant = async (data) => {
   try {
+    // Parse the coordinates string into an array of numbers
+    const coordinates = data.address.coord.split(',').map(coord => parseFloat(coord.trim()));
+
+    // Update the coord field with the correct object format
+    data.address.coord = {
+      type: "Point",
+      coordinates: coordinates
+    };
     const restaurant = new Restaurant(data);
     const newRestaurant = await restaurant.save();
     return newRestaurant;
@@ -33,19 +44,38 @@ const addNewRestaurant = async (data) => {
   }
 };
 
-const getAllRestaurants = async (page, perPage, borough) => {
+
+async function getAllRestaurants(page, perPage, borough) {
   try {
-    const filter = borough ? { borough } : {};
-    const restaurants = await Restaurant.find(filter)
-      .skip((page - 1) * perPage)
-      .limit(parseInt(perPage, 10))
-      .exec();
-    return restaurants;
+      // Calculate skip value based on pagination parameters
+      const skip = (page - 1) * perPage;
+
+      // Query restaurants based on borough and pagination parameters
+      const restaurants = await Restaurant.find(borough ? { borough } : {})
+                                          .skip(skip)
+                                          .limit(perPage);
+
+      // Calculate total count of restaurants
+      const totalCount = await Restaurant.countDocuments(borough ? { borough } : {});
+
+      // Determine total number of pages
+      const totalPages = Math.ceil(totalCount / perPage);
+
+      // Determine if first and last page links should be enabled
+      const firstPage = 1;
+      const lastPage = totalPages;
+
+      return {
+          restaurants,
+          totalPages,
+          firstPage,
+          lastPage
+      };
   } catch (error) {
-    console.error("Error getting restaurants:", error);
-    throw error;
+      throw new Error("Error getting restaurants: " + error.message);
   }
-};
+}
+
 
 const getRestaurantById = async (id) => {
   try {
