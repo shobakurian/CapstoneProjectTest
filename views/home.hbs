@@ -1,5 +1,15 @@
-<h1 class="mt-5 mb-3 text-center">All Restaurants</h1>
-<div class="container">
+<div class="container mt-5">
+    <h1 class="mb-3 text-center">All Restaurants</h1>
+    <!-- Search Form -->
+    <form action="/search" method="GET" class="mb-4" style="padding: 0; box-shadow: 0 0 0 0; margin: 0">
+        <div class="input-group">
+            <input type="text" class="form-control" placeholder="Search by name..." name="searchQuery" aria-label="Search by name">
+            <div class="input-group-append" style="height: 42px;">
+                <button class="btn btn-outline-secondary" type="submit">Search</button>
+            </div>
+        </div>
+    </form>
+
     <table class="table table-hover">
         <!-- Table header -->
         <thead class="thead-light">
