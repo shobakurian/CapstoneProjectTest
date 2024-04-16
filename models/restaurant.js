@@ -110,6 +110,7 @@ const deleteRestaurantById = async (id) => {
   }
 };
 
+
  const searchRestaurantById= async (searchQuery) =>{
   try {
     // Perform the search query by _id

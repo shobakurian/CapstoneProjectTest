@@ -126,7 +126,7 @@ function ensureAuthenticated(req, res, next) {
 
 
 app.get("/", (req, res) => {
-  res.render("mainPage"); // Assuming "mainPage.hbs" is the name of your Handlebars view file
+  res.render("mainPage"); 
 });
 
 // User Authentication Routes
@@ -327,18 +327,16 @@ app.get("/search/", async (req, res) => {
 });
 
 // DELETE route to delete a restaurant by ID
-app.delete('/restaurants/:id', async (req, res) => {
+app.delete("/restaurants/:id", async (req, res) => {
   try {
-      // Delete the restaurant
-      await deleteRestaurantById(req.params.id);
-
-      // Redirect back to the restaurants page
-      res.redirect('/restaurants');
+    await deleteRestaurantById(req.params.id);
+    res.redirect("/restaurants");
   } catch (error) {
-      console.error('Error deleting restaurant:', error);
-      res.status(500).send('Server error');
+    console.error("Error deleting restaurant:", error.message); 
+    res.status(500).send("Server error: " + error.message); 
   }
 });
+
 
 // Initialize the database and start the server
 initialize(process.env.MONGODB_URI)
