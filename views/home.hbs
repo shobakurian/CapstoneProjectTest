@@ -1,23 +1,27 @@
 <div class="container mt-5">
     <h1 class="mb-3 text-center">All Restaurants</h1>
     <!-- Search Form -->
-    <form action="/search" method="GET" class="mb-4" style="padding: 0; box-shadow: 0 0 0 0; margin: 0">
-        <div class="input-group">
-            <input type="text" class="form-control" placeholder="Search by name..." name="searchQuery" aria-label="Search by name">
-            <div class="input-group-append" style="height: 42px;">
-                <button class="btn btn-outline-secondary" type="submit">Search</button>
-            </div>
+<form action="/search/" method="GET" class="mb-4" style="padding: 0; box-shadow: 0 0 0 0; margin: 0">
+  <div class="input-group">
+        <input type="text" class="form-control" placeholder="Search by  Restaurant Id.." name="id" aria-label="Search by  Restaurant Id">
+        <div class="input-group-append" style="height: 42px;">
+            <button class="btn btn-outline-secondary" type="submit">Search</button>
         </div>
-    </form>
+    </div>
+</form>
+
 
     <table class="table table-hover">
         <!-- Table header -->
         <thead class="thead-light">
             <tr>
+                <th>Restaurant Id</th>
                 <th>Name</th>
                 <th>Borough</th>
                 <th>Address</th>
                 <th>Cuisine</th>
+                <th> </th>
+                <th></th>
                 <!-- Add more table headers as needed -->
             </tr>
         </thead>
@@ -25,16 +29,19 @@
             <!-- Loop through restaurants -->
             {{#each restaurants}}
             <tr>
+                <td>{{_id}}</td>
                 <td><strong>{{name}}</strong></td>
                 <td>{{borough}}</td>
                 <td>{{address.street}}</td>
                 <td>{{cuisine}} Cuisine</td>
-                <!-- Add more table cells as needed -->
+                <td>
+                    <a href="/restaurants/{{_id}}" class="btn btn-primary edit-btn">View</a>
+                </td>
             </tr>
             {{/each}}
         </tbody>
     </table>
-<!-- Pagination -->
+    <!-- Pagination -->
     <nav aria-label="Pagination">
         <ul class="pagination justify-content-center">
             <!-- First page link -->

@@ -1,3 +1,10 @@
+/****************************************************************************** * 
+ * ITE5315 – Project * I declare that this assignment is my own work in accordance with
+ *  Humber Academic Policy. * No part of this assignment has been copied manually or electronically
+ *  from any other source * (including web sites) or distributed to other students. 
+ * * * Group member Name: Abin Mathew & Shoba Merin Kurian
+ *  Student IDs: n01579677 and N01511573  Date: 16-04-2024
+ *  ******************************************************************************/
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -19,6 +26,7 @@ const {
   getRestaurantById,
   updateRestaurantById,
   deleteRestaurantById,
+  searchRestaurantById,
 } = require("./models/restaurant");
 
 
@@ -30,7 +38,7 @@ const { allowInsecurePrototypeAccess } = require('@handlebars/allow-prototype-ac
 app.engine(
   "hbs",
   engine({
-    defaultLayout: "main", // Specify a default layout: views/layouts/main.hbs
+    defaultLayout: "main", 
     extname: ".hbs", // Set the file extension for Handlebars files
     layoutsDir: path.join(__dirname, "views/layouts"), // Specify the path to layouts
     partialsDir: path.join(__dirname, "views/partials"),
@@ -69,9 +77,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 // Define Handlebars helper functions
 const handlebars = require('handlebars');
-const exphbs = require('express-handlebars');
-
-
+//passport encryption
 passport.use(
   new LocalStrategy(
     {
@@ -120,9 +126,8 @@ function ensureAuthenticated(req, res, next) {
 
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "mainPage.html"));
+  res.render("mainPage"); // Assuming "mainPage.hbs" is the name of your Handlebars view file
 });
-
 
 // User Authentication Routes
 
@@ -221,18 +226,6 @@ app.post("/api/restaurants", async (req, res) => {
 });
 
 
-// API Route to get all restaurants
-app.get("/api/restaurants",ensureAuthenticated, async (req, res) => {
-    try {
-        const { page = 1, perPage = 10, borough } = req.query;
-        const restaurants = await getAllRestaurants(page, perPage, borough);
-        res.json(restaurants);
-    } catch (error) {
-        console.error("Error getting restaurants:", error);
-        res.status(500).json({ error: "Server error" });
-    }
-});
-
 app.get("/restaurants", ensureAuthenticated, async (req, res) => {
     try {
         // Extract query parameters
@@ -267,7 +260,7 @@ app.get("/restaurants", ensureAuthenticated, async (req, res) => {
     }
 });
 
-// Display restaurant details
+// Display restaurant details//used for edit
 app.get("/restaurants/:id",ensureAuthenticated, async (req, res) => {
     try {
         const restaurant = await getRestaurantById(req.params.id);
@@ -297,29 +290,55 @@ app.get("/api/restaurants/edit/:id",ensureAuthenticated, async (req, res) => {
     }
 });
 
+
 // Handle restaurant update
 app.post("/api/restaurants/edit/:id", async (req, res) => {
-    try {
-        await updateRestaurantById(req.params.id, req.body);
-        res.redirect(`/restaurants/${req.params.id}`);
-    } catch (error) {
-        console.error("Error updating restaurant:", error);
-        res.status(500).render("error", { error: "Server error" });
-    }
+  try {
+      const { name, borough, cuisine, address } = req.body;
+      const updatedData = { name, borough, cuisine, address };
+      await updateRestaurantById(req.params.id, updatedData);
+      res.redirect('/restaurants'); // Redirect to the home page where all restaurants are listed
+  } catch (error) {
+      console.error("Error updating restaurant:", error);
+      res.status(500).render("error", { error: "Server error" });
+  }
 });
 
-// Handle restaurant deletion
-app.delete("/api/restaurants/delete/:id",ensureAuthenticated, async (req, res) => {
-    try {
-        await deleteRestaurantById(req.params.id);
-        res.redirect("/restaurants");
-    } catch (error) {
-        console.error("Error deleting restaurant:", error);
-        res.status(500).render("error", { error: "Server error" });
-    }
+// Search route
+app.get("/search/", async (req, res) => {
+  const id = req.query.id; // Access search query parameter
+  try {
+      const restaurant = await getRestaurantById(id);
+      
+      // Check if the restaurant exists
+      if (!restaurant) {
+          // If restaurant not found, render error page
+          res.status(404).render("error", { error: "Restaurant not found" });
+          return;
+      }
+      
+      // Render the searchResults template with the found restaurant
+      res.render("searchResults", { restaurant: restaurant.toObject(), searchId: id }); // Pass searchId to template
+  } catch (error) {
+      // Handle server error
+      console.error("Error getting restaurant by ID:", error);
+      res.status(500).render("error", { error: "Server error" });
+  }
 });
 
+// DELETE route to delete a restaurant by ID
+app.delete('/restaurants/:id', async (req, res) => {
+  try {
+      // Delete the restaurant
+      await deleteRestaurantById(req.params.id);
 
+      // Redirect back to the restaurants page
+      res.redirect('/restaurants');
+  } catch (error) {
+      console.error('Error deleting restaurant:', error);
+      res.status(500).send('Server error');
+  }
+});
 
 // Initialize the database and start the server
 initialize(process.env.MONGODB_URI)

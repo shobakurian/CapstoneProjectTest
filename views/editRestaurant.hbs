@@ -1,6 +1,6 @@
 <div class="container mt-5 editRestaurant">
     <h1 class="mb-4">Edit Restaurant: {{restaurant.name}}</h1>
-    <form action="/api/restaurants/update/{{restaurant._id}}" method="POST">
+    <form action="/api/restaurants/edit/{{restaurant._id}}" method="POST">
         
         <div class="row">
             <!-- Name -->
@@ -57,7 +57,9 @@
         </div>
 
         <!-- Buttons  -->
+        <div class="mt-4">
         <button type="submit" class="btn btn-primary">Update Restaurant</button>
-        <button type="button" class="btn btn-secondary mt-4 ml-2" onclick="window.location.href='/restaurants/{{restaurant._id}}';">Cancel</button>
+        <a href="/restaurants/{{restaurant._id}}" class="btn btn-secondary mt-4 ml-2">Cancel</a>
+    </div>
     </form>
 </div>

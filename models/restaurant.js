@@ -86,10 +86,11 @@ const getRestaurantById = async (id) => {
   }
 };
 
-const updateRestaurantById = async (data, id) => {
+const updateRestaurantById = async (id, data) => {
   try {
     const updatedRestaurant = await Restaurant.findByIdAndUpdate(id, data, {
       new: true,
+      runValidators: true // This ensures that Mongoose validators are run during the update
     }).exec();
     return updatedRestaurant;
   } catch (error) {
@@ -98,6 +99,7 @@ const updateRestaurantById = async (data, id) => {
   }
 };
 
+// Delete restaurant by ID
 const deleteRestaurantById = async (id) => {
   try {
     const deletedRestaurant = await Restaurant.findByIdAndDelete(id).exec();
@@ -108,10 +110,20 @@ const deleteRestaurantById = async (id) => {
   }
 };
 
+ const searchRestaurantById= async (searchQuery) =>{
+  try {
+    // Perform the search query by _id
+    const restaurant = await Restaurant.findById(searchQuery);
+    return restaurant;
+  } catch (error) {
+    throw error;
+  }
+}
 module.exports = {
   addNewRestaurant,
   getAllRestaurants,
   getRestaurantById,
   updateRestaurantById,
   deleteRestaurantById,
+  searchRestaurantById,
 };
