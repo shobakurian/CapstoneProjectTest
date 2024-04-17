@@ -62,7 +62,7 @@ app.use(
     saveUninitialized: false,
     cookie: {
       secure: app.get("env") === "production",
-      httpOnly: true,
+      httpOnly: false,
       maxAge: 3600000,
     },
   })
