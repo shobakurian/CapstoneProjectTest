@@ -1,10 +1,4 @@
-/****************************************************************************** * 
- * ITE5315 – Project * I declare that this assignment is my own work in accordance with
- *  Humber Academic Policy. * No part of this assignment has been copied manually or electronically
- *  from any other source * (including web sites) or distributed to other students. 
- * * * Group member Name: Abin Mathew & Shoba Merin Kurian
- *  Student IDs: n01579677 and N01511573  Date: 16-04-2024
- *  ******************************************************************************/
+
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -19,15 +13,6 @@ const flash = require("express-flash");
 const bcrypt = require("bcrypt");
 const { validationResult } = require('express-validator');
 const User = require("./models/user");
-
-const {
-  addNewRestaurant,
-  getAllRestaurants,
-  getRestaurantById,
-  updateRestaurantById,
-  deleteRestaurantById,
-  searchRestaurantById,
-} = require("./models/restaurant");
 
 
 const app = express();
@@ -187,7 +172,7 @@ app.get("/login", (req, res) => {
 app.post(
   "/login",
   passport.authenticate("local", {
-    successRedirect: "/restaurants",
+    successRedirect: "/home",
     failureRedirect: "/login",
     failureFlash: "Invalid username or password."
   })
@@ -208,51 +193,12 @@ app.use((req, res, next) => {
 });  
 
 
-// Display form to add a new restaurant
-app.get("/restaurants/new",ensureAuthenticated, (req, res) => {
-    res.render("addRestaurant");
-});
 
 
-// API Route to add a new restaurant
-app.post("/api/restaurants", async (req, res) => {
+app.get("/home", ensureAuthenticated, async (req, res) => {
     try {
-        const restaurant = await addNewRestaurant(req.body);
-        res.status(201).redirect("/restaurants");
-    } catch (error) {
-        console.error("Error creating restaurant:", error);
-        res.status(500).render("error", { error: "Server error" });
-    }
-});
-
-
-app.get("/restaurants", ensureAuthenticated, async (req, res) => {
-    try {
-        // Extract query parameters
-        const page = parseInt(req.query.page) || 1;
-        const perPage = parseInt(req.query.perPage) || 10;
-        const borough = req.query.borough;
-
-        // Get restaurants for the current page
-        const { restaurants, totalPages, firstPage, lastPage } = await getAllRestaurants(page, perPage, borough);
-
-        // Determine if there's a next page
-        const hasNextPage = page < totalPages;
-
-        // Determine if there's a previous page
-        const hasPrevPage = page > 1;
-
-        // Render the home template with restaurants and pagination information
-        res.render("home", {
-            restaurants: restaurants.map(restaurant => restaurant.toObject()),
-            hasNextPage,
-            hasPrevPage,
-            nextPage: hasNextPage ? page + 1 : null,
-            prevPage: hasPrevPage ? page - 1 : null,
-            firstPage,
-            lastPage,
-            totalPages,
-            currentPage: page
+      
+        res.render("home", {users          
         });
     } catch (error) {
         console.error("Error getting restaurants:", error);
@@ -260,82 +206,6 @@ app.get("/restaurants", ensureAuthenticated, async (req, res) => {
     }
 });
 
-// Display restaurant details//used for edit
-app.get("/restaurants/:id",ensureAuthenticated, async (req, res) => {
-    try {
-        const restaurant = await getRestaurantById(req.params.id);
-        if (!restaurant) {
-            res.status(404).render("error", { error: "Restaurant not found" });
-            return;
-        }
-        res.render("restaurantDetail", { restaurant: restaurant.toObject() });
-    } catch (error) {
-        console.error("Error getting restaurant by ID:", error);
-        res.status(500).render("error", { error: "Server error" });
-    }
-});
-
-// Display edit form for a restaurant
-app.get("/api/restaurants/edit/:id",ensureAuthenticated, async (req, res) => {
-    try {
-        const restaurant = await getRestaurantById(req.params.id);
-        if (!restaurant) {
-            res.status(404).render("error", { error: "Restaurant not found" });
-            return;
-        }
-        res.render("editRestaurant", { restaurant: restaurant.toObject() });
-    } catch (error) {
-        console.error("Error showing edit form:", error);
-        res.status(500).render("error", { error: "Server error" });
-    }
-});
-
-
-// Handle restaurant update
-app.post("/api/restaurants/edit/:id", async (req, res) => {
-  try {
-      const { name, borough, cuisine, address } = req.body;
-      const updatedData = { name, borough, cuisine, address };
-      await updateRestaurantById(req.params.id, updatedData);
-      res.redirect('/restaurants'); // Redirect to the home page where all restaurants are listed
-  } catch (error) {
-      console.error("Error updating restaurant:", error);
-      res.status(500).render("error", { error: "Server error" });
-  }
-});
-
-// Search route
-app.get("/search/", async (req, res) => {
-  const id = req.query.id; // Access search query parameter
-  try {
-      const restaurant = await getRestaurantById(id);
-      
-      // Check if the restaurant exists
-      if (!restaurant) {
-          // If restaurant not found, render error page
-          res.status(404).render("error", { error: "Restaurant not found" });
-          return;
-      }
-      
-      // Render the searchResults template with the found restaurant
-      res.render("searchResults", { restaurant: restaurant.toObject(), searchId: id }); // Pass searchId to template
-  } catch (error) {
-      // Handle server error
-      console.error("Error getting restaurant by ID:", error);
-      res.status(500).render("error", { error: "Server error" });
-  }
-});
-
-// DELETE route to delete a restaurant by ID
-app.delete("/restaurants/:id", async (req, res) => {
-  try {
-    await deleteRestaurantById(req.params.id);
-    res.redirect("/restaurants");
-  } catch (error) {
-    console.error("Error deleting restaurant:", error.message); 
-    res.status(500).send("Server error: " + error.message); 
-  }
-});
 
 
 // Initialize the database and start the server
