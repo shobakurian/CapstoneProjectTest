@@ -34,7 +34,8 @@ app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "views"));
 
 const PORT = process.env.PORT || 3000;
-
+// Regular expression for email validation
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Middleware setup
 app.use(cors());
 app.use(express.json());
@@ -123,7 +124,7 @@ app.get('/register', (req, res) => {
 // Handle the registration form submission
 app.post("/register", async (req, res) => {
   try {
-    const { username, password, confirmPassword } = req.body;
+    const { username,email, password, confirmPassword } = req.body;
 
     // Check if the passwords match
     if (password !== confirmPassword) {
@@ -132,18 +133,23 @@ app.post("/register", async (req, res) => {
     }
 
     // Check if the user already exists
-    const existingUser = await User.findOne({ username });
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
     if (existingUser) {
-      req.flash("error", "Username already exists");
-      return res.redirect("/register");
+        req.flash("error", "Username or email already exists");
+        return res.redirect("/register");
     }
-
+   // Check if the email is valid
+   if (!emailRegex.test(email)) {
+    req.flash("error", "Invalid email address");
+    return res.redirect("/register");
+}
     // Hash the password before saving it to the database
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create a new user and save to the database
     const user = new User({
       username,
+      email,
       password: hashedPassword,
     });
     await user.save();
@@ -198,8 +204,7 @@ app.use((req, res, next) => {
 app.get("/home", ensureAuthenticated, async (req, res) => {
     try {
       
-        res.render("home", {users          
-        });
+        res.render("home" );
     } catch (error) {
         console.error("Error getting restaurants:", error);
         res.status(500).render("error", { error: "Server error" });
